@@ -1,0 +1,36 @@
+{
+ "vjepa_surprise_coef": -0.11836891765857487,
+ "dino_change_coef": -0.47541420546031177,
+ "auc_by_event_type": {
+  "vjepa_surprise": {
+   "collision": 0.579,
+   "containment": 0.639,
+   "falling": 0.742,
+   "occlusion": 0.666
+  },
+  "dino_change": {
+   "collision": 0.546,
+   "containment": 0.905,
+   "falling": 0.783,
+   "occlusion": 0.899
+  },
+  "flow_accel": {
+   "collision": 0.745,
+   "containment": 0.656,
+   "falling": 0.632,
+   "occlusion": 0.672
+  },
+  "pix_diff": {
+   "collision": 0.63,
+   "containment": 0.587,
+   "falling": 0.742,
+   "occlusion": 0.448
+  }
+ },
+ "n_by_event_type": {
+  "collision": 14,
+  "containment": 14,
+  "falling": 14,
+  "occlusion": 14
+ }
+}

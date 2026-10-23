@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "world-maps: testing video-model internals against human physical perception"
+message: "If you reference this software, please cite the repository and the original studies whose data it uses."
+type: software
+authors:
+  - name: Physical Reasoning
+repository-code: "https://github.com/physicalreasoning/world-maps"
+license: Apache-2.0
+keywords:
+  - intuitive physics
+  - video models
+  - world models
+  - human-model comparison
+  - event perception
+abstract: >-
+  Exploratory analyses of public data from the Yale Cognitive and Neural Computation Lab.
+  Compares video-model prediction error and representation change with human detection of
+  slowdowns around physical-event boundaries, and reanalyzes Woven's agreement with human
+  cloth judgments. Confirmatory studies are planned and not yet run.

@@ -1,0 +1,44 @@
+[project]
+name = "world-maps"
+version = "0.1.0"
+description = "Do video models build world maps? Video-model internals vs human physical perception"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",
+    "opencv-python-headless>=4.9",
+]
+
+[project.optional-dependencies]
+models = [
+    "torch>=2.4,<3",
+    "transformers>=5.0",
+    "safetensors>=0.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.9",
+]
+
+[tool.uv.build-backend]
+module-name = "world_maps"
+module-root = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+ignore = ["E741"]

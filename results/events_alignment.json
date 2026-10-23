@@ -1,0 +1,399 @@
+{
+ "summary": {
+  "n_checked": 61,
+  "n_scenes": 32,
+  "scenes_with_two": 29,
+  "n_detected": 61,
+  "median_diff_s": 0.06666666666666643,
+  "within_0p1s": 58,
+  "within_0p2s": 58,
+  "outliers": [
+   {
+    "scene": "collision_containment5313",
+    "k": 25,
+    "expected": 5.0,
+    "observed": 6.033333333333333
+   },
+   {
+    "scene": "falling_occlusion998",
+    "k": 25,
+    "expected": 5.0,
+    "observed": 4.666666666666667
+   },
+   {
+    "scene": "occlusion_collision4310",
+    "k": 25,
+    "expected": 5.0,
+    "observed": 3.2666666666666666
+   }
+  ]
+ },
+ "rows": [
+  {
+   "scene": "collision_collision311",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "collision_collision311",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "collision_collision312",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_collision312",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "collision_containment315",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_containment315",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "collision_containment5313",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_containment5313",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 6.033333333333333
+  },
+  {
+   "scene": "collision_falling3998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_falling3998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "collision_falling998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_falling998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "collision_occlusion315",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_occlusion315",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "collision_occlusion3311",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "collision_occlusion3311",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "containment_collision308",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_collision308",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "containment_collision314",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_collision314",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "containment_containment319",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_containment319",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "containment_containment4320",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_containment4320",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "containment_falling2998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_falling998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_falling998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "containment_occlusion3314",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "containment_occlusion3314",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "containment_occlusion5314",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "containment_occlusion5314",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "falling_collision4998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "falling_collision4998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "falling_collision998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "falling_collision998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "falling_containment988",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "falling_containment988",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "falling_containment998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "falling_containment998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "falling_falling316",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "falling_falling316",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "falling_falling4316",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "falling_falling4316",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "falling_occlusion5998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "falling_occlusion998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "falling_occlusion998",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 4.666666666666667
+  },
+  {
+   "scene": "occlusion_collision4310",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "occlusion_collision4310",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 3.2666666666666666
+  },
+  {
+   "scene": "occlusion_collision4311",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "occlusion_collision4311",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "occlusion_containment308",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "occlusion_containment308",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "occlusion_containment312",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "occlusion_containment312",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "occlusion_falling2319",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "occlusion_falling2319",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  },
+  {
+   "scene": "occlusion_falling998",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "occlusion_occlusion307",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.033333333333333
+  },
+  {
+   "scene": "occlusion_occlusion307",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.033333333333333
+  },
+  {
+   "scene": "occlusion_occlusion310",
+   "k": 10,
+   "expected": 2.0,
+   "observed": 2.066666666666667
+  },
+  {
+   "scene": "occlusion_occlusion310",
+   "k": 25,
+   "expected": 5.0,
+   "observed": 5.066666666666666
+  }
+ ]
+}
