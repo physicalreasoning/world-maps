@@ -10,6 +10,8 @@ dependencies = [
     "scipy>=1.11",
     "scikit-learn>=1.4",
     "opencv-python-headless>=4.9",
+    "matplotlib>=3.11.2",
+    "remotezip>=0.12.6",
 ]
 
 [project.optional-dependencies]
@@ -28,6 +30,10 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.9",
 ]
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true
 
 [tool.uv.build-backend]
 module-name = "world_maps"
