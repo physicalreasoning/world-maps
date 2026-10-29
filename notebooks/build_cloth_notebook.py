@@ -348,7 +348,8 @@ MOUNT_DRIVE = False         #@param {type:"boolean"}
 import os, torch
 gpu_gb = torch.cuda.get_device_properties(0).total_memory / 1e9 if torch.cuda.is_available() else 0
 print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NONE (switch to a GPU runtime)'}  {gpu_gb:.0f} GB")
-VLM_ID = "Qwen/Qwen3-VL-8B-Instruct" if gpu_gb >= 20 else "Qwen/Qwen3-VL-4B-Instruct"
+VLM_ID = "Qwen/Qwen3-VL-8B-Instruct" if gpu_gb >= 30 else "Qwen/Qwen3-VL-4B-Instruct"  # 4B on an L4 (24 GB)
+print("VLM:", VLM_ID, "| on an L4 set PER_SCENARIO = 24 and N_FRAMES = 73 (about 3 h of generation)")
 try:
     from google.colab import userdata
     tok = userdata.get("HF_TOKEN")
