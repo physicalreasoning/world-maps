@@ -121,6 +121,41 @@ The mechanism is open. Changes in what is visible are one candidate explanation,
 
 The resolvable difference is a normal-approximation sensitivity estimate, not a power calculation.
 
+## 3. Shape under cloth (preliminary, local models only)
+
+[Yildirim et al. (2024)](https://www.nature.com/articles/s41562-023-01759-7). Stimuli: [CNCLgithub/intuitive-physics-3d-shape-perception-stimuli](https://github.com/CNCLgithub/intuitive-physics-3d-shape-perception-stimuli) (720 PNG). Behaviour and PbAS runs: [CNCLgithub/PbAS-model-human-comparisons](https://github.com/CNCLgithub/PbAS-model-human-comparisons) (20,880 trials, 174 workers; 162 kept after the lab's rule, accuracy > 71/120).
+
+### Reproduction of the paper's human and model numbers
+
+| Quantity | Ours | Paper |
+|---|---|---|
+| Occluded, unlimited: accuracy same / different category | 0.73 / 0.97 | Fig. 4a |
+| Split-half ceiling, occluded, all / same-category | 0.80 / 0.71 | 0.80 / 0.71 |
+| PbAS trial-level r with human accuracy, occluded same-category (iteration 110) | 0.44 [0.32, 0.55] | 0.44 [0.33, 0.54] |
+| PbAS, unoccluded same-category | 0.44 | 0.44 |
+| PbAS iterations-to-criterion vs log RT, occluded / unoccluded | 0.74 / 0.81 | 0.71 / 0.67 |
+
+### Readouts
+
+- **BU (paper protocol):** Pearson correlation between the target's embedding and each candidate's; choice = larger correlation; continuous score by the Luce rule; margin = |d1 − d2|.
+- **De-draping (new):** ridge map from the draped target's embedding (PCA 100) to the bare object's embedding (PCA 64 fitted on the 240 candidates), learned on the other trials or on the other nine categories, then the same 2AFC on the mapped embedding.
+- **Imagination (new; Colab):** an image generator drapes each candidate or un-drapes the target; candidates are scored by feature similarity to the imagined images; sequential sampling over imagined samples gives a response-time prediction.
+
+### Results (DINOv2 S/B/L, SigLIP 2; best layer by occluded same-category r)
+
+| model | occluded acc same / diff | unoccluded acc same | occluded r same [CI] | margin–RT ρ | de-drape acc same (held-out category) | de-drape r same |
+|---|---|---|---|---|---|---|
+| dinoB (L9 grid) | 0.35 / 0.53 | 0.48 | 0.16 [0.07, 0.25] | −0.03 | 0.68 | −0.12 |
+| dinoS (L12 grid) | 0.48 / 0.63 | 0.58 | 0.12 [0.03, 0.20] | −0.26 | 0.55 | −0.06 |
+| siglip2 (pooled) | 0.53 / 0.58 | 0.75 | 0.10 [0.02, 0.18] | −0.35 | 0.62 | −0.10 |
+| dinoL (L20 grid) | 0.40 / 0.65 | 0.63 | 0.04 [−0.03, 0.12] | −0.14 | 0.52 | −0.02 |
+
+All four are below PbAS on the occluded same-category correlation (direct bootstrap p < .001). The de-draping map recovers hidden-shape information (accuracy up to 0.68 with the target's category never seen in training) without producing a human-like pattern of difficulty (r ≈ 0). Decision rules for the full run are in the project plan; this section will be replaced by the Colab results (AlexNet reference, DINOv2-g, DINOv3, CLIP, V-JEPA 2, Qwen3-VL, imagination stage).
+
+### Limits
+
+Frozen embeddings and a correlation readout, as in the paper's bottom-up baseline; no fine-tuning. The generator keeps each candidate's pose, whereas PbAS searched over rotations. Participant bootstraps condition on the released trials; split-half ceilings underestimate the true ceiling (half the participants).
+
 ## Corrections log
 
 - **Scaling.** Within-scene z-scoring was transductive on covariates. With training-fold-only scaling, the DINOv2 gain is about half the original (+8.9 vs +17.4); both are reported.

@@ -48,6 +48,17 @@ From the released trials of [Bi et al. (2025)](https://www.nature.com/articles/s
 
 A normal-approximation sensitivity estimate puts the resolvable difference in this four-scene design at about 8 points.
 
+### 3. Shape under cloth: have foundation models closed the gap? (preliminary)
+
+Data: [Yildirim, Siegel, Soltani, Ray Chaudhuri & Tenenbaum (2024)](https://www.nature.com/articles/s41562-023-01759-7). People match a cloth-draped object to its bare counterpart; the lab's physics-based analysis-by-synthesis model (PbAS) explains trial-level accuracy and response times, and ImageNet CNNs sit at chance on the hard trials. Stimuli, human data and PbAS runs are public.
+
+- **The human side and the PbAS reference reproduce from the released data with our code:** occluded same-category accuracy 0.73 (ceiling 0.71 split-half); PbAS trial-level r = 0.44 [0.32, 0.55] (paper: 0.44 [0.33, 0.54]); PbAS iterations-to-criterion vs log RT r = 0.74 / 0.81 (paper 0.71 / 0.67).
+- **Frozen foundation encoders with the paper's protocol do not close the gap.** DINOv2 S/B/L and SigLIP 2 score 0.35–0.53 on occluded same-category trials (humans 0.73) and correlate with human trial accuracy at r ≤ 0.16, all below PbAS (p < .001, participant bootstrap). Pose variation alone hurts: unoccluded same-category accuracy is 0.48–0.75 (humans 0.87).
+- **Decodable is not used.** A linear map from the draped target's embedding to bare-object embeddings, learned on held-out categories, lifts occluded same-category accuracy to 0.52–0.68, but its trial-level correlation with humans stays near zero. The hidden-shape information is partly recoverable from the features; the pattern of difficulty is not the human one.
+- **Decision margin and RT.** Larger model margins go with faster human responses for SigLIP 2 (ρ = −0.35) and DINOv2-S (−0.26) but not DINOv2-B; to be settled with the full model set.
+
+Still to run (Colab): AlexNet (the paper's reference), DINOv2-g, DINOv3, CLIP, V-JEPA 2, Qwen3-VL, and an *imagination* stage in which an image generator stands in for the cloth simulator inside analysis-by-synthesis. Table and method in [results/cloth/cloth_results.md](results/cloth/cloth_results.md).
+
 ## Repository layout
 
 ```text
@@ -59,7 +70,12 @@ scripts/
   event_type_breakdown.py     exploratory event-type breakdown
   check_event_alignment.py    verifies probe timing against the original videos
   woven_reanalysis.py         Woven vs DNN agreement with human choices
-src/world_maps/               paths and tested helpers
+  extract_event_signals_scaled.py, analyze_events_scaled.py   Pilot 0 protocol on larger models (Colab)
+  cloth_extract.py            shape under cloth: embeddings of the 720 stimulus (and imagined) images
+  cloth_analyze.py            humans, PbAS reference, model readouts, de-draping, imagination, VLM
+  cloth_imagine.py            generator-in-the-loop stage (SDXL img2img or FLUX Kontext; GPU)
+notebooks/                    Colab notebooks (generated; see build_cloth_notebook.py)
+src/world_maps/               paths, tested helpers, and the shape-under-cloth data module
 results/                      committed outputs (features and JSON results)
 tests/                        unit tests (run in CI)
 ```
@@ -71,6 +87,8 @@ uv sync --extra models --no-config --default-index https://pypi.org/simple
 bash scripts/download_data.sh                 # about 270 MB
 uv run python scripts/analyze_events.py       # uses committed results/events_features.csv
 ```
+
+For the shape-under-cloth study: `uv run python scripts/cloth_extract.py --models dinoB dinoL siglip2` then `uv run python scripts/cloth_analyze.py` (the stimuli and behaviour repositories are cloned on first run).
 
 To recompute the model signals from the videos, run `extract_event_signals.py`. It takes about 46 minutes on an Apple M4 Pro, or a few minutes on a GPU. See [docs/REPRODUCE.md](docs/REPRODUCE.md) for the full sequence.
 
@@ -94,3 +112,4 @@ See [CITATION.cff](CITATION.cff). Please also cite the original studies:
 
 - Yates, T. S., Yasuda, S., & Yildirim, I. (2024). Temporal segmentation and "look ahead" simulation: Physical events structure visual perception of intuitive physics. *Journal of Experimental Psychology: Human Perception and Performance*.
 - Bi, W., Shah, A. D., Wong, K. W., Scholl, B. J., & Yildirim, I. (2025). Computational models reveal that intuitive physics underlies visual processing of soft objects. *Nature Communications*.
+- Yildirim, I., Siegel, M. H., Soltani, A. A., Ray Chaudhuri, S., & Tenenbaum, J. B. (2024). Perception of 3D shape integrates intuitive physics and analysis-by-synthesis. *Nature Human Behaviour*, 8, 320–335.

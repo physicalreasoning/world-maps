@@ -20,6 +20,13 @@ uv run python scripts/check_event_alignment.py
 
 # 5. Woven reanalysis                                     # -> results/woven_agree.json
 uv run python scripts/woven_reanalysis.py agree
+# 6. Shape under cloth (stimuli and behaviour are cloned on first run)
+uv run python scripts/cloth_extract.py --models dinoS dinoB dinoL siglip2   # -> results/cloth/features/*.npz (not committed)
+uv run python scripts/cloth_analyze.py                                      # -> results/cloth/cloth_results.{json,md}, figures/
+# GPU only: imagination stage, then re-embed and re-analyse
+uv run python scripts/cloth_imagine.py --generator sdxl --k 4
+uv run python scripts/cloth_extract.py --models dinoB dinoL siglip2 && uv run python scripts/cloth_analyze.py
+# Colab: notebooks/colab_draped_shapes.ipynb (regenerate with python notebooks/build_cloth_notebook.py)
 ```
 
 All analysis scripts use fixed random seeds. On MPS, model signals may differ from CUDA in the last decimal places.
