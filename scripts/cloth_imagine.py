@@ -13,9 +13,10 @@ Generators (diffusers):
            strength; about 2-4 s per image on an A100 at 768 px)
   kontext  black-forest-labs/FLUX.1-Kontext-dev instruction editing (gated: accept the licence on the Hub
            and set HF_TOKEN; about 10-20 s per image; better instruction following)
-  ltx      Lightricks/LTX-Video image-to-video: the cloth FALLS over the candidate (or is PULLED OFF the target)
-           and the last frame is the imagined image; about 15-30 s per clip at 512 px. Directions are written
-           as drape_video / undrape_video so the analysis can compare process (video) with appearance (image).
+  ltx      LTX-Video 2B (Lightricks/LTX-Video-0.9.5; the 0.9.7/0.9.8 "dev" checkpoints are 13B, do not use them on a
+           40 GB card) image-to-video: the cloth FALLS over the candidate (or is PULLED OFF the target) and the last
+           frame is the imagined image; about 10-20 s per clip at 512 px. Directions are written as drape_video /
+           undrape_video so the analysis can compare process (video) with appearance (image).
   wan      Wan-AI/Wan2.2-TI2V-5B-Diffusers image-to-video, same idea, slower (about 1-2 min per clip).
 The prompts never name the object category, so no category information leaks into the imagined images.
 Resumable: existing files are skipped.
@@ -67,6 +68,8 @@ def load_pipe(kind: str):
 
         pipe = StableDiffusionXLImg2ImgPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16,
                                                                 variant="fp16", use_safetensors=True).to(DEV)
+        if hasattr(pipe.vae, "enable_slicing"):
+            pipe.vae.enable_slicing()
         return pipe
     if kind == "kontext":
         from diffusers import FluxKontextPipeline
@@ -78,7 +81,12 @@ def load_pipe(kind: str):
     if kind == "ltx":
         from diffusers import LTXImageToVideoPipeline
 
-        return LTXImageToVideoPipeline.from_pretrained("Lightricks/LTX-Video", torch_dtype=torch.bfloat16).to(DEV)
+        pipe = LTXImageToVideoPipeline.from_pretrained("Lightricks/LTX-Video-0.9.5", torch_dtype=torch.bfloat16).to(DEV)
+        for fn in ("enable_tiling", "enable_slicing"):
+            if hasattr(pipe.vae, fn):
+                getattr(pipe.vae, fn)()
+        print(f"LTX transformer: {sum(p.numel() for p in pipe.transformer.parameters()) / 1e9:.1f}B parameters", flush=True)
+        return pipe
     if kind == "wan":
         from diffusers import AutoencoderKLWan, WanImageToVideoPipeline
 
@@ -125,13 +133,15 @@ def main(argv=None):
     ap.add_argument("--directions", nargs="+", default=["drape", "undrape"])
     ap.add_argument("--k", type=int, default=4, help="imagined samples per image")
     ap.add_argument("--size", type=int, default=768)
-    ap.add_argument("--steps", type=int, default=30)
+    ap.add_argument("--steps", type=int, default=None, help="denoising steps (default 30 for image models, 25 for video)")
     ap.add_argument("--strength-drape", type=float, default=0.6)
     ap.add_argument("--strength-undrape", type=float, default=0.7)
     ap.add_argument("--limit", type=int, default=None, help="first N trials (smoke test)")
     ap.add_argument("--out", default=str(OUT))
     args = ap.parse_args(argv)
     out = __import__("pathlib").Path(args.out)
+    if args.steps is None:
+        args.steps = 25 if args.generator in ("ltx", "wan") else 30
     cloth.fetch_assets()
     pipe = load_pipe(args.generator)
     trials = cloth.trials()[: args.limit] if args.limit else cloth.trials()

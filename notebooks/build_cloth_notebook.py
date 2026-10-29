@@ -192,12 +192,12 @@ the two routes (appearance edit vs physical process) are compared directly again
 
 | Stage | What |
 |---|---|
-| Video imagination | LTX-Video (default, ≈ 15–30 s per clip) or Wan 2.2 TI2V-5B (≈ 1–2 min) image-to-video; K clips per image; last frame saved; a few mp4s kept for inspection |
+| Video imagination | LTX-Video 2B (default, ≈ 10–20 s per clip at 512 px; the 13B "dev" checkpoints are not used) or Wan 2.2 TI2V-5B (≈ 1–2 min, optional) image-to-video; K clips per image; last frame saved; a few mp4s kept for inspection |
 | Encoders | the models in `MODELS` embed the stimuli and the imagined frames |
 | Analysis | humans, PbAS reference, raw readouts, de-draping, image-imagination (if present from notebook 02 on Drive) and video-imagination readouts with the sequential-sampling RT model |
 
-**Runtime:** A100. K = 2 with LTX at 512 px ≈ 2–3 h for 480 + 240 clips; set `IMAGINE_LIMIT` for a partial run (the
-analysis needs all 120 trials to score, partial runs are for inspecting quality). The last cell downloads
+**Runtime:** A100. K = 2 with LTX 2B at 512 px ≈ 1.5–2.5 h for 480 + 240 clips (expect about 12 GB of GPU memory);
+set `IMAGINE_LIMIT` for a partial run (the analysis needs all 120 trials to score, partial runs are for inspecting quality). The last cell downloads
 `world_maps_cloth_video_results.zip`. Nothing is pushed to GitHub.
 """),
     code("""#@title 1. Configuration
