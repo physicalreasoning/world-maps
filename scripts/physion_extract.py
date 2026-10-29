@@ -108,7 +108,10 @@ def stage_encoders(stims, names, log=print):
             if family == "vjepa2":
                 from transformers import VJEPA2Model
 
-                m = VJEPA2Model.from_pretrained(hub).to(DEV).eval()
+                try:
+                    m = VJEPA2Model.from_pretrained(hub, attn_implementation="eager").to(DEV).eval()
+                except (TypeError, ValueError):
+                    m = VJEPA2Model.from_pretrained(hub).to(DEV).eval()
                 dtype = torch.bfloat16 if DEV == "cuda" else torch.float32
                 m = m.to(dtype)
                 side = size // 16
@@ -148,7 +151,10 @@ def stage_encoders(stims, names, log=print):
             else:
                 from transformers import AutoModel
 
-                m = AutoModel.from_pretrained(hub).to(DEV).eval()
+                try:  # fused attention kernels fault on some CUDA stacks; eager is slower but safe
+                    m = AutoModel.from_pretrained(hub, attn_implementation="eager").to(DEV).eval()
+                except (TypeError, ValueError):
+                    m = AutoModel.from_pretrained(hub).to(DEV).eval()
                 vision = m.vision_model if hasattr(m, "vision_model") else m
                 mean, std = (torch.tensor([0.5] * 3).view(1, 3, 1, 1),) * 2 if "siglip" in hub else (MEAN, STD)
                 rows_mean, rows_last, rows_diff = [], [], []
