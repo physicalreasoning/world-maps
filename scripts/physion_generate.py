@@ -7,8 +7,10 @@ with one row per (stimulus, sample), the detector's decision and soft score, plu
 inspection.
 
 Generators (diffusers):
-  ltx     Lightricks/LTX-Video-0.9.7-dev with video conditioning (LTXConditionPipeline): the context frames are the
-          condition at frame 0; 97 frames at 24 fps are generated (about 2.7 s beyond the context). ~20-40 s per clip.
+  ltx     LTX-Video 2B (Lightricks/LTX-Video-0.9.5 by default; --ltx-id selects another checkpoint, the 0.9.7/0.9.8
+          "dev" checkpoints are 13B and need an 80 GB card) with video conditioning (LTXConditionPipeline): the context
+          frames are the condition at frame 0; 97 frames at 24 fps are generated (about 2.7 s beyond the context).
+          About 15-30 s per clip on an A100 for the 2B model.
   cosmos  nvidia/Cosmos-Predict2-2B-Video2World (video-conditioned world model; experimental in this script).
 The prompt describes a camera-fixed physical scene and never states the outcome.
 """
@@ -32,6 +34,7 @@ from world_maps.paths import RESULTS  # noqa: E402
 
 OUT = RESULTS / "physion" / "generated"
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
+LTX_ID = "Lightricks/LTX-Video-0.9.5"  # 2B; fits a 40 GB card with room to spare
 PROMPT = ("A fixed camera films a simple indoor physics scene with a few rigid objects on the floor. The objects keep moving "
           "according to gravity, momentum and collisions, exactly as they were moving. Realistic rendering, no camera motion, "
           "no new objects, no cuts.")
@@ -50,11 +53,16 @@ def select(stims, per_scenario: int, seed: int = 0):
     return out
 
 
-def load_pipe(kind: str):
+def load_pipe(kind: str, ltx_id: str = LTX_ID):
     if kind == "ltx":
         from diffusers import LTXConditionPipeline
 
-        pipe = LTXConditionPipeline.from_pretrained("Lightricks/LTX-Video-0.9.7-dev", torch_dtype=torch.bfloat16).to(DEV)
+        pipe = LTXConditionPipeline.from_pretrained(ltx_id, torch_dtype=torch.bfloat16).to(DEV)
+        for fn in ("enable_tiling", "enable_slicing"):
+            if hasattr(pipe.vae, fn):
+                getattr(pipe.vae, fn)()
+        n = sum(p.numel() for p in pipe.transformer.parameters()) / 1e9
+        print(f"LTX transformer: {n:.1f}B parameters ({ltx_id})", flush=True)
         return pipe
     if kind == "cosmos":
         from diffusers import Cosmos2VideoToWorldPipeline
@@ -96,7 +104,8 @@ def main(argv=None):
     ap.add_argument("--k", type=int, default=1, help="samples per stimulus")
     ap.add_argument("--size", type=int, default=512)
     ap.add_argument("--n-frames", type=int, default=97)
-    ap.add_argument("--steps", type=int, default=30)
+    ap.add_argument("--steps", type=int, default=25)
+    ap.add_argument("--ltx-id", default=LTX_ID)
     ap.add_argument("--context-fps", type=float, default=24.0, help="context frames are resampled to the generator's frame rate")
     ap.add_argument("--keep-videos", type=int, default=16)
     ap.add_argument("--limit", type=int, default=None, help="first N selected stimuli (smoke test)")
@@ -113,7 +122,7 @@ def main(argv=None):
     if scores_f.exists():
         d = pd.read_csv(scores_f)
         done = set(zip(d.stim_id, d["sample"]))
-    pipe = load_pipe(args.generator)
+    pipe = load_pipe(args.generator, args.ltx_id)
     t0 = time.time()
     n_kept = 0
     rows = []
