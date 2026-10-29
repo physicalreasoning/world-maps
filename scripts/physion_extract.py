@@ -128,7 +128,10 @@ def stage_encoders(stims, names, log=print):
             elif family == "videomae":
                 from transformers import VideoMAEModel
 
-                m = VideoMAEModel.from_pretrained(hub).to(DEV).eval()
+                try:  # the fused attention kernel has raised illegal-memory-access errors for this model on some CUDA stacks
+                    m = VideoMAEModel.from_pretrained(hub, attn_implementation="eager").to(DEV).eval()
+                except TypeError:
+                    m = VideoMAEModel.from_pretrained(hub).to(DEV).eval()
                 side = size // 16
                 per = side * side
                 rows_mean, rows_grid = [], []
@@ -172,6 +175,10 @@ def stage_encoders(stims, names, log=print):
             import traceback
             traceback.print_exc()
             meta[name] = {"status": f"failed: {type(e).__name__}: {str(e)[:200]}", "hub": hub}
+            json.dump(meta, open(meta_p, "w"), indent=1)
+            if "CUDA" in str(e) or "cuda" in type(e).__name__.lower():
+                log(f"{name}: CUDA error; the CUDA context is unusable in this process. Rerun the stage: finished models are skipped.")
+                break
         json.dump(meta, open(meta_p, "w"), indent=1)
         log(f"{name}: {meta[name]['status']}")
 
