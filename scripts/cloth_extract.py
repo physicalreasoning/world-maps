@@ -4,7 +4,7 @@ For every model we store, per layer, one vector per image: the pooled token (CLS
 tokens average-pooled to 4 x 4 (so a readout can use coarse spatial layout). Output
 ``results/cloth/features/{model}.npz`` with ``index`` columns (condition, trial, role, source, sample)
 and arrays ``X_{layer}`` (float16). ``source`` is ``stim`` for the released images, ``drape`` / ``undrape``
-for generator outputs written by ``cloth_imagine.py`` (``results/cloth/imagined/{drape,undrape}/...``).
+for generator outputs written by ``cloth_imagine.py`` (``results/cloth/imagined/{drape,undrape,drape_video,undrape_video}/...``).
 
 Models: alexnet (fc6, the paper's bottom-up reference; needs torchvision), dinoS/B/L/g (DINOv2),
 dinov3L, siglip2, clipL, vjepaL/H/g (video encoder on a 16-frame static clip), and ``vlm`` (Qwen3-VL
@@ -78,7 +78,7 @@ def image_table() -> pd.DataFrame:
     idx = cloth.image_index()
     idx["source"], idx["sample"] = "stim", 0
     rows = [idx]
-    for src in ["drape", "undrape"]:
+    for src in ["drape", "undrape", "drape_video", "undrape_video"]:
         for p in sorted(glob.glob(str(IMAGINED / src / "*.png"))):
             name = os.path.basename(p)[:-4]  # trial_{t}_{role}_{k}
             parts = name.split("_")

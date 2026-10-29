@@ -13,6 +13,10 @@ Generators (diffusers):
            strength; about 2-4 s per image on an A100 at 768 px)
   kontext  black-forest-labs/FLUX.1-Kontext-dev instruction editing (gated: accept the licence on the Hub
            and set HF_TOKEN; about 10-20 s per image; better instruction following)
+  ltx      Lightricks/LTX-Video image-to-video: the cloth FALLS over the candidate (or is PULLED OFF the target)
+           and the last frame is the imagined image; about 15-30 s per clip at 512 px. Directions are written
+           as drape_video / undrape_video so the analysis can compare process (video) with appearance (image).
+  wan      Wan-AI/Wan2.2-TI2V-5B-Diffusers image-to-video, same idea, slower (about 1-2 min per clip).
 The prompts never name the object category, so no category information leaks into the imagined images.
 Resumable: existing files are skipped.
 """
@@ -41,6 +45,14 @@ PROMPTS = {
                "same size, uniform black background",
 }
 NEGATIVE = "text, watermark, colour, people, hands, extra objects, blurry"
+VIDEO = {
+    "drape": "A thin white cotton cloth falls from above onto the grey object and drapes over it completely, settling with natural "
+             "folds and wrinkles until the object is fully covered. Fixed camera, uniform black background, matte grey render, no "
+             "other objects.",
+    "undrape": "The white cloth covering the object is lifted away and slides off, revealing the bare rigid grey object underneath "
+               "in the same position. Fixed camera, uniform black background, matte grey render, no other objects.",
+}
+VIDEO_DIRS = {"drape": "drape_video", "undrape": "undrape_video"}
 KONTEXT = {
     "drape": "Cover this object completely with a thin white cotton cloth draped over it so that it is fully hidden; keep the camera "
              "angle, pose, size and the black background exactly the same.",
@@ -63,22 +75,53 @@ def load_pipe(kind: str):
                                                    token=os.environ.get("HF_TOKEN"))
         pipe.enable_model_cpu_offload()
         return pipe
+    if kind == "ltx":
+        from diffusers import LTXImageToVideoPipeline
+
+        return LTXImageToVideoPipeline.from_pretrained("Lightricks/LTX-Video", torch_dtype=torch.bfloat16).to(DEV)
+    if kind == "wan":
+        from diffusers import AutoencoderKLWan, WanImageToVideoPipeline
+
+        rep = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+        vae = AutoencoderKLWan.from_pretrained(rep, subfolder="vae", torch_dtype=torch.float32)
+        pipe = WanImageToVideoPipeline.from_pretrained(rep, vae=vae, torch_dtype=torch.bfloat16)
+        pipe.enable_model_cpu_offload()
+        return pipe
     raise ValueError(kind)
 
 
-def generate(pipe, kind: str, direction: str, image: Image.Image, seed: int, size: int, strength: float, steps: int) -> Image.Image:
+def generate(pipe, kind: str, direction: str, image: Image.Image, seed: int, size: int, strength: float, steps: int,
+             n_frames: int = 49, keep_video: str | None = None) -> Image.Image:
     g = torch.Generator(device="cpu").manual_seed(seed)
     src = image.convert("RGB").resize((size, size), Image.BICUBIC)
     if kind == "sdxl":
         return pipe(prompt=PROMPTS[direction], negative_prompt=NEGATIVE, image=src, strength=strength, guidance_scale=6.0,
                     num_inference_steps=steps, generator=g).images[0]
-    return pipe(image=src, prompt=KONTEXT[direction], guidance_scale=2.5, num_inference_steps=steps, height=size, width=size,
-                generator=g).images[0]
+    if kind == "kontext":
+        return pipe(image=src, prompt=KONTEXT[direction], guidance_scale=2.5, num_inference_steps=steps, height=size, width=size,
+                    generator=g).images[0]
+    # image-to-video: the last frame is the imagined end state of the physical process
+    kw = dict(image=src, prompt=VIDEO[direction], negative_prompt=NEGATIVE + ", camera motion, zoom", width=size, height=size,
+              num_frames=n_frames, num_inference_steps=steps, generator=g)
+    if kind == "wan":
+        kw["guidance_scale"] = 5.0
+    frames = pipe(**kw).frames[0]
+    if keep_video:
+        try:
+            from diffusers.utils import export_to_video
+
+            export_to_video([f if isinstance(f, Image.Image) else Image.fromarray(f) for f in frames], keep_video, fps=24)
+        except Exception as e:  # inspection only
+            print(f"  (video export skipped: {type(e).__name__})", flush=True)
+    last = frames[-1]
+    return last if isinstance(last, Image.Image) else Image.fromarray(last)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--generator", default="sdxl", choices=["sdxl", "kontext"])
+    ap.add_argument("--generator", default="sdxl", choices=["sdxl", "kontext", "ltx", "wan"])
+    ap.add_argument("--n-frames", type=int, default=49, help="frames per clip for the video generators (8k+1 for LTX, 4k+1 for Wan)")
+    ap.add_argument("--keep-videos", type=int, default=6, help="save the first N clips per direction as mp4 for inspection")
     ap.add_argument("--directions", nargs="+", default=["drape", "undrape"])
     ap.add_argument("--k", type=int, default=4, help="imagined samples per image")
     ap.add_argument("--size", type=int, default=768)
@@ -94,8 +137,12 @@ def main(argv=None):
     trials = cloth.trials()[: args.limit] if args.limit else cloth.trials()
     t0 = time.time()
     n = 0
+    is_video = args.generator in ("ltx", "wan")
+    if is_video and args.size % 32:
+        args.size = 32 * (args.size // 32)
+        print(f"size rounded to {args.size} for the video generator")
     for direction in args.directions:
-        d = out / direction
+        d = out / (VIDEO_DIRS[direction] if is_video else direction)
         d.mkdir(parents=True, exist_ok=True)
         roles = ["match", "distractor"] if direction == "drape" else ["target"]
         strength = args.strength_drape if direction == "drape" else args.strength_undrape
@@ -107,8 +154,9 @@ def main(argv=None):
                     if f.exists():
                         continue
                     try:
+                        keep = str(f.with_suffix(".mp4")) if (is_video and n < args.keep_videos) else None
                         img = generate(pipe, args.generator, direction, Image.open(ims[role]), seed=1000 * tr.t + 10 * k + (role == "distractor"),
-                                       size=args.size, strength=strength, steps=args.steps)
+                                       size=args.size, strength=strength, steps=args.steps, n_frames=args.n_frames, keep_video=keep)
                         img.resize((224, 224), Image.LANCZOS).save(f)
                         n += 1
                     except Exception as e:  # keep going

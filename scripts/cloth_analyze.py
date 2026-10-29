@@ -247,8 +247,8 @@ def main(argv=None):
                                                 "r_all": {k: v for k, v in boot_corr(dd["score"], hb).items() if k != "_rs"},
                                                 "r_same": {k: v for k, v in boot_corr(dd["score"], hb, np.where(SAME)[0]).items() if k != "_rs"}}
                     # imagination readouts
-                    for src in ["drape", "undrape"]:
-                        if src == "drape":
+                    for src in ["drape", "undrape", "drape_video", "undrape_video"]:
+                        if src.startswith("drape"):
                             SM, SD = F.samples(layer, src, "match"), F.samples(layer, src, "distractor")
                             if len(SM) < 120 or len(SD) < 120:
                                 continue
@@ -307,6 +307,9 @@ def main(argv=None):
                              "imagine_drape_acc_same": e["occluded"].get("imagine_drape", {}).get("cells", {}).get("same_category"),
                              "imagine_drape_r_same": e["occluded"].get("imagine_drape", {}).get("r_same", {}).get("mean"),
                              "imagine_undrape_r_same": e["occluded"].get("imagine_undrape", {}).get("r_same", {}).get("mean"),
+                             "imagine_drape_video_acc_same": e["occluded"].get("imagine_drape_video", {}).get("cells", {}).get("same_category"),
+                             "imagine_drape_video_r_same": e["occluded"].get("imagine_drape_video", {}).get("r_same", {}).get("mean"),
+                             "imagine_undrape_video_r_same": e["occluded"].get("imagine_undrape_video", {}).get("r_same", {}).get("mean"),
                              "vs_pbas_p": e["occluded"]["vs_pbas_same"]["p_two_sided"]})
     summary = pd.DataFrame(summary_rows)
 
@@ -334,12 +337,13 @@ def summarize(res, summary: pd.DataFrame) -> str:
                  f"trial r same-category {f(r['PbAS']['occluded']['unlimited']['r_same']['mean'])} [{f(r['PbAS']['occluded']['unlimited']['r_same']['ci'][0])}, {f(r['PbAS']['occluded']['unlimited']['r_same']['ci'][1])}], "
                  f"all trials {f(r['PbAS']['occluded']['unlimited']['r_all']['mean'])}; unoccluded same-category r {f(r['PbAS']['unoccluded']['unlimited']['r_same']['mean'])}; "
                  f"RT r (log) occluded {f(r['PbAS']['occluded']['rt_r_log'])}, unoccluded {f(r['PbAS']['unoccluded']['rt_r_log'])}. Paper: 0.44 / 0.44, RT 0.71 / 0.67.")
-    lines += ["", "| model | params | best layer | occluded acc same / diff | unoccluded acc same | occluded r same [CI] | occluded r all | unocc r same | margin–RT ρ | de-drape acc same (loo / loco) | de-drape loco r same | imagine drape acc / r same | imagine undrape r same | p vs PbAS |",
-              "|" + "---|" * 14]
+    lines += ["", "| model | params | best layer | occluded acc same / diff | unoccluded acc same | occluded r same [CI] | occluded r all | unocc r same | margin–RT ρ | de-drape acc same (loo / loco) | de-drape loco r same | imagine drape acc / r same | imagine undrape r same | video drape acc / r same | video undrape r same | p vs PbAS |",
+              "|" + "---|" * 16]
     for _, s in summary.sort_values("occ_r_same", ascending=False).iterrows():
         lines.append(f"| {s.model} | {f(s.params/1e6,0) if s.params else '–'}M | {s.best_layer} | {f(s.occ_acc_same)} / {f(s.occ_acc_diff)} | {f(s.unocc_acc_same)} | "
                      f"{f(s.occ_r_same)} [{f(s.occ_r_same_ci[0])}, {f(s.occ_r_same_ci[1])}] | {f(s.occ_r_all)} | {f(s.unocc_r_same)} | {f(s.occ_margin_rt_spearman)} | "
-                     f"{f(s.dedrape_loo_acc_same)} / {f(s.dedrape_loco_acc_same)} | {f(s.dedrape_loco_r_same)} | {f(s.imagine_drape_acc_same)} / {f(s.imagine_drape_r_same)} | {f(s.imagine_undrape_r_same)} | {f(s.vs_pbas_p,3)} |")
+                     f"{f(s.dedrape_loo_acc_same)} / {f(s.dedrape_loco_acc_same)} | {f(s.dedrape_loco_r_same)} | {f(s.imagine_drape_acc_same)} / {f(s.imagine_drape_r_same)} | {f(s.imagine_undrape_r_same)} | "
+                     f"{f(s.imagine_drape_video_acc_same)} / {f(s.imagine_drape_video_r_same)} | {f(s.imagine_undrape_video_r_same)} | {f(s.vs_pbas_p,3)} |")
     if res["vlm"]:
         lines += ["", "VLM (Qwen3-VL 2AFC): " + json.dumps({c: {"acc_same": v["cells"]["same_category"], "acc_diff": v["cells"]["different_category"], "r_same": v["r_same"]["mean"]} for c, v in res["vlm"].items()})]
     lines += ["", "Readouts: BU = paper protocol on frozen embeddings; de-drape = linear map draped→bare learned on other trials (loo) or other categories (loco); "
@@ -364,7 +368,9 @@ def figures(res, human, ref, models, out: Path):
     if summ.dedrape_loco_r_same.notna().any():
         ax.scatter(x, summ.dedrape_loco_r_same, color="#e80", zorder=3, label="de-drape (held-out category)")
     if summ.imagine_drape_r_same.notna().any():
-        ax.scatter(x, summ.imagine_drape_r_same, color="#2a2", marker="s", zorder=3, label="imagination (drape)")
+        ax.scatter(x, summ.imagine_drape_r_same, color="#2a2", marker="s", zorder=3, label="imagination (image: drape)")
+    if summ.imagine_drape_video_r_same.notna().any():
+        ax.scatter(x, summ.imagine_drape_video_r_same, color="#a2a", marker="^", zorder=3, label="imagination (video: cloth falls)")
     ax.axhline(ref["PbAS"]["occluded"]["unlimited"]["r_same"]["mean"], ls="--", c="k", label="PbAS")
     ax.axhline(human["ceiling"]["occluded"]["same_category"]["mean"], ls=":", c="gray", label="split-half ceiling")
     ax.set_xticks(x); ax.set_xticklabels([f"{m}\n{l}" for m, l in zip(summ.model, summ.best_layer)], fontsize=7)

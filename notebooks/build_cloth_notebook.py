@@ -171,11 +171,138 @@ files.download("/content/world_maps_cloth_results.zip")
 """),
 ]
 
-nb = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "name": "python3"}, "language_info": {"name": "python"},
-                                  "accelerator": "GPU", "colab": {"provenance": [], "gpuType": "A100"}}, "nbformat": 4, "nbformat_minor": 5}
+META = {"kernelspec": {"display_name": "Python 3", "name": "python3"}, "language_info": {"name": "python"},
+        "accelerator": "GPU", "colab": {"provenance": [], "gpuType": "A100"}}
+nb = {"cells": cells, "metadata": META, "nbformat": 4, "nbformat_minor": 5}
 out = REPO / "notebooks" / "colab_draped_shapes.ipynb"
 out.write_text(json.dumps(nb, indent=1))
 print("wrote", out)
 if HANDOFF.parent.exists():
     HANDOFF.write_text(json.dumps(nb, indent=1))
     print("wrote", HANDOFF)
+
+# ------------------------------------------------------------------ notebook 03: imagination as a physical process (video)
+cells3 = [
+    md("""# World Maps — imagination as a physical *process*: video generators inside analysis-by-synthesis (Colab)
+
+Notebook 02 lets an image generator *edit* a candidate into a draped version. This notebook asks whether *simulating the
+process* does better: an image-to-video model watches a cloth **fall onto** each candidate (or get **pulled off** the
+target), and the last frame is the imagined end state. Same trials, same human data, same scoring as notebook 02, so
+the two routes (appearance edit vs physical process) are compared directly against humans and PbAS.
+
+| Stage | What |
+|---|---|
+| Video imagination | LTX-Video (default, ≈ 15–30 s per clip) or Wan 2.2 TI2V-5B (≈ 1–2 min) image-to-video; K clips per image; last frame saved; a few mp4s kept for inspection |
+| Encoders | the models in `MODELS` embed the stimuli and the imagined frames |
+| Analysis | humans, PbAS reference, raw readouts, de-draping, image-imagination (if present from notebook 02 on Drive) and video-imagination readouts with the sequential-sampling RT model |
+
+**Runtime:** A100. K = 2 with LTX at 512 px ≈ 2–3 h for 480 + 240 clips; set `IMAGINE_LIMIT` for a partial run (the
+analysis needs all 120 trials to score, partial runs are for inspecting quality). The last cell downloads
+`world_maps_cloth_video_results.zip`. Nothing is pushed to GitHub.
+"""),
+    code("""#@title 1. Configuration
+MODELS = ["dinoB", "dinoL", "siglip2", "clipL"]  #@param {type:"raw"}
+VIDEO_GENERATOR = "ltx"     #@param ["ltx", "wan"]
+K_SAMPLES = 2               #@param {type:"integer"}
+VIDEO_SIZE = 512            #@param {type:"integer"}   # multiple of 32
+N_FRAMES = 49               #@param {type:"integer"}   # 8k+1 for LTX, 4k+1 for Wan
+DIRECTIONS = ["drape", "undrape"]  #@param {type:"raw"}
+IMAGINE_LIMIT = None        #@param {type:"raw"}       # e.g. 12 trials to inspect quality first
+SMOKE_TEST_FIRST = True     #@param {type:"boolean"}
+LOAD_FROM_DRIVE = False     #@param {type:"boolean"}   # reuse results/cloth/features and imagined images saved by notebook 02
+
+import os, torch
+gpu_gb = torch.cuda.get_device_properties(0).total_memory / 1e9 if torch.cuda.is_available() else 0
+print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NONE (switch to a GPU runtime)'}  {gpu_gb:.0f} GB")
+try:
+    from google.colab import userdata
+    tok = userdata.get("HF_TOKEN")
+    if tok: os.environ["HF_TOKEN"] = tok; print("HF_TOKEN loaded from Colab secrets")
+except Exception:
+    pass
+"""),
+    code("""#@title 2. Code and dependencies (about 2 min)
+%cd /content
+import os
+if not os.path.exists("world-maps"):
+    !git clone -q https://github.com/physicalreasoning/world-maps.git
+%cd /content/world-maps
+!git pull -q; git rev-parse --short HEAD
+!pip install -q "transformers>=5.0" accelerate "diffusers>=0.33" imageio imageio-ffmpeg remotezip matplotlib pillow opencv-python-headless scikit-learn scipy pandas safetensors
+import torch, transformers, diffusers
+print("torch", torch.__version__, "| transformers", transformers.__version__, "| diffusers", diffusers.__version__)
+os.environ["PYTHONPATH"] = "/content/world-maps/src"
+os.makedirs("results/cloth", exist_ok=True)
+if LOAD_FROM_DRIVE:
+    from google.colab import drive
+    drive.mount("/content/drive")
+    !cp -r /content/drive/MyDrive/world_maps_cloth/features results/cloth/ 2>/dev/null; cp -r /content/drive/MyDrive/world_maps_cloth/imagined results/cloth/ 2>/dev/null; ls results/cloth
+!PYTHONPATH=src python -c "from world_maps import cloth; cloth.fetch_assets(); print('assets ready')"
+"""),
+]
+for rel, path in FILES.items():
+    cells3.append(code(f"%%writefile /content/world-maps/{rel}\n" + path.read_text()))
+cells3 += [
+    code("""#@title 3. Smoke test: one clip per direction, shown as video + last frame
+%cd /content/world-maps
+if SMOKE_TEST_FIRST:
+    !PYTHONPATH=src python scripts/cloth_imagine.py --generator {VIDEO_GENERATOR} --k 1 --limit 1 --size {VIDEO_SIZE} --n-frames {N_FRAMES} --keep-videos 4 --out /content/smoke_video 2>&1 | tail -4
+    from IPython.display import display, Video
+    from PIL import Image
+    import glob
+    for f in sorted(glob.glob("/content/smoke_video/*/*.mp4")):
+        print(f); display(Video(f, embed=True, width=256))
+    for f in sorted(glob.glob("/content/smoke_video/*/*.png")):
+        print(f); display(Image.open(f).resize((160, 160)))
+else:
+    print("skipped")
+"""),
+    code("""#@title 4. Video imagination for all trials (long)
+%cd /content/world-maps
+limit = f"--limit {IMAGINE_LIMIT}" if IMAGINE_LIMIT else ""
+dirs = " ".join(DIRECTIONS)
+!PYTHONPATH=src python scripts/cloth_imagine.py --generator {VIDEO_GENERATOR} --directions {dirs} --k {K_SAMPLES} --size {VIDEO_SIZE} --n-frames {N_FRAMES} {limit} 2>&1 | tail -20
+import glob, os, numpy as np
+from PIL import Image
+from IPython.display import display
+rows = []
+for t in [3, 9, 15, 27]:
+    d = "data/cloth/stimuli/unoccluded-occluded"
+    ims = [f"{d}/trial_{t}_gtCloth.png", f"{d}/trial_{t}_gtNoCloth.png", f"{d}/trial_{t}_disNoCloth0.png",
+           f"results/cloth/imagined/drape_video/trial_{t}_match_0.png", f"results/cloth/imagined/drape_video/trial_{t}_distractor_0.png",
+           f"results/cloth/imagined/undrape_video/trial_{t}_target_0.png"]
+    ims = [np.array(Image.open(p).convert("RGB").resize((160, 160))) if os.path.exists(p) else np.zeros((160, 160, 3), np.uint8) for p in ims]
+    rows.append(np.concatenate(ims, 1))
+sheet = Image.fromarray(np.concatenate(rows, 0)); sheet.save("results/cloth/imagined_video_contact_sheet.png"); display(sheet)
+print("columns: target | match | distractor | video-draped match | video-draped distractor | video-undraped target")
+"""),
+    code("""#@title 5. Embed stimuli and imagined frames, then analyse
+%cd /content/world-maps
+args = " ".join(MODELS)
+!PYTHONPATH=src python scripts/cloth_extract.py --models {args} 2>&1 | grep -v -i "warn\\|Loading weights\\|Fetching" | tail -8
+!PYTHONPATH=src python scripts/cloth_analyze.py --n-boot 2000
+from IPython.display import Image as IM, display
+display(IM(filename="results/cloth/figures/trial_correlation_occluded_same.png"))
+"""),
+    code("""#@title 6. Package results for download
+%cd /content/world-maps
+!zip -q -r /content/world_maps_cloth_video_results.zip results/cloth/cloth_results.json results/cloth/cloth_results.md results/cloth/figures results/cloth/features/models.json results/cloth/imagined_video_contact_sheet.png $(ls results/cloth/imagined/*/*.mp4 2>/dev/null | head -12) 2>/dev/null
+!ls -la /content/world_maps_cloth_video_results.zip
+from google.colab import files
+files.download("/content/world_maps_cloth_video_results.zip")
+"""),
+    md("""### If something fails
+- **LTX-Video shape errors:** `VIDEO_SIZE` must be a multiple of 32 and `N_FRAMES` = 8k + 1 (49, 57, 65). For Wan use 4k + 1 (49, 81).
+- **Out of memory (Wan):** lower `VIDEO_SIZE` to 480 or use `ltx`.
+- **Quality check first:** run with `IMAGINE_LIMIT = 12` and look at the contact sheet and mp4s before the full run.
+- **Runtime disconnects:** rerun cells 2 and 4; finished clips are skipped.
+"""),
+]
+nb3 = {"cells": cells3, "metadata": META, "nbformat": 4, "nbformat_minor": 5}
+out3 = REPO / "notebooks" / "colab_video_imagination.ipynb"
+out3.write_text(json.dumps(nb3, indent=1))
+print("wrote", out3)
+h3 = HANDOFF.parent / "03_video_imagination.ipynb"
+if HANDOFF.parent.exists():
+    h3.write_text(json.dumps(nb3, indent=1))
+    print("wrote", h3)
