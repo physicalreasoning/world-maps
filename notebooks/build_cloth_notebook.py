@@ -393,7 +393,7 @@ else:
     code("""#@title 5. Encoders on the 1.5 s context (about 15 min) and VLM (optional, about 20 min)
 %cd /content/world-maps
 args = " ".join(MODELS)
-!PYTHONPATH=src python scripts/physion_extract.py --stages encoders --models {args} 2>&1 | grep -v -i "warn\\|Loading weights\\|Fetching" | tail -8
+!CUDA_LAUNCH_BLOCKING=1 PYTHONPATH=src python scripts/physion_extract.py --stages encoders --models {args} 2>&1 | grep -v -i "warn\\|Loading weights\\|Fetching\\|UNEXPECTED" | tail -8
 if RUN_VLM:
     !PYTHONPATH=src python scripts/physion_extract.py --stages vlm --vlm-id {VLM_ID} 2>&1 | grep -v -i "warn\\|Loading weights\\|Fetching" | tail -3
 """),
