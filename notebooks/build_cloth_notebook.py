@@ -373,7 +373,7 @@ os.makedirs("results/physion", exist_ok=True)
 for rel, path in PHYSION_FILES.items():
     cells4.append(code(f"%%writefile /content/world-maps/{rel}\n" + path.read_text()))
 cells4 += [
-    code("""#@title 3. Data (270 MB) and detector validation on the real outcomes (CPU, about 8 min)
+    code("""#@title 3. Data (270 MB) and detector validation on the real outcomes (CPU; skipped when the committed results exist)
 %cd /content/world-maps
 !PYTHONPATH=src python scripts/physion_extract.py --stages detector 2>&1 | tail -14
 """),

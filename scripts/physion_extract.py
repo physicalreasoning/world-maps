@@ -223,6 +223,7 @@ def main(argv=None):
     ap.add_argument("--models", nargs="+", default=["vjepaL", "vmaeL", "dinoL", "siglip2"])
     ap.add_argument("--vlm-id", default=VLM_ID)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--force", action="store_true", help="recompute the detector stage even if its outputs exist")
     args = ap.parse_args(argv)
     OUT.mkdir(parents=True, exist_ok=True)
     P.fetch_assets()
@@ -231,7 +232,10 @@ def main(argv=None):
         stims = stims[: args.limit]
     P.stim_table(stims).to_csv(OUT / "stimuli.csv", index=False)
     if "detector" in args.stages:
-        stage_detector(stims)
+        if (OUT / "detector_real.csv").exists() and (OUT / "kinematics.csv").exists() and not args.force and not args.limit:
+            print("detector outputs exist (committed in the repository; same code and data); use --force to recompute")
+        else:
+            stage_detector(stims)
     if "encoders" in args.stages:
         stage_encoders(stims, args.models)
     if "vlm" in args.stages:
