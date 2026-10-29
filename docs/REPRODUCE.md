@@ -27,6 +27,12 @@ uv run python scripts/cloth_analyze.py                                      # ->
 uv run python scripts/cloth_imagine.py --generator sdxl --k 4
 uv run python scripts/cloth_extract.py --models dinoB dinoL siglip2 && uv run python scripts/cloth_analyze.py
 # Colab: notebooks/colab_draped_shapes.ipynb (regenerate with python notebooks/build_cloth_notebook.py)
+
+# 7. Physion: generators as simulators (data fetched on first run; detector validation is CPU)
+uv run python scripts/physion_extract.py --stages detector           # -> results/physion/detector_real.csv, kinematics.csv
+uv run python scripts/physion_extract.py --stages encoders vlm        # GPU
+uv run python scripts/physion_generate.py --generator ltx --per-scenario 40   # GPU, hours
+uv run python scripts/physion_analyze.py                              # -> results/physion/physion_results.{json,md}
 ```
 
 All analysis scripts use fixed random seeds. On MPS, model signals may differ from CUDA in the last decimal places.

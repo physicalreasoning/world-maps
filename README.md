@@ -59,6 +59,10 @@ Data: [Yildirim, Siegel, Soltani, Ray Chaudhuri & Tenenbaum (2024)](https://www.
 
 Still to run (Colab): AlexNet (the paper's reference), DINOv2-g, DINOv3, CLIP, V-JEPA 2, Qwen3-VL, and an *imagination* stage in which an image generator stands in for the cloth simulator inside analysis-by-synthesis. Table and method in [results/cloth/cloth_results.md](results/cloth/cloth_results.md).
 
+### 4. Generators as simulators (built, GPU run pending)
+
+Data: [Physion](https://github.com/cogtoolslab/physics-benchmarking-neurips2021) (Bear et al. 2021): 1,144 test clips with per-stimulus human predictions and ground truth; people saw the first 1.5 s and predicted whether the red object would touch the yellow area. A video generator continues the 1.5 s context and a contact detector reads the imagined outcome. The detector is validated on the real outcomes first (0.81 accuracy overall; a validity gate selects scenarios ≥ 0.75). The question is whether imagined outcomes agree with people on *which* stimuli are hard, beyond accuracy, more than frozen-encoder readouts and a kinematic heuristic do. Scripts `physion_*`; plan and decision rules in the project folder.
+
 ## Repository layout
 
 ```text
@@ -73,7 +77,10 @@ scripts/
   extract_event_signals_scaled.py, analyze_events_scaled.py   Pilot 0 protocol on larger models (Colab)
   cloth_extract.py            shape under cloth: embeddings of the 720 stimulus (and imagined) images
   cloth_analyze.py            humans, PbAS reference, model readouts, de-draping, imagination, VLM
-  cloth_imagine.py            generator-in-the-loop stage (SDXL img2img or FLUX Kontext; GPU)
+  cloth_imagine.py            generator-in-the-loop stage (SDXL, FLUX Kontext, LTX-Video, Wan 2.2; GPU)
+  physion_extract.py          Physion: contact-detector validation, kinematic features, encoder features, VLM
+  physion_generate.py         Physion: video-generator continuations scored with the detector (GPU)
+  physion_analyze.py          Physion: humans, detector gate, readouts, generator, paired comparisons
 notebooks/                    Colab notebooks (generated; see build_cloth_notebook.py)
 src/world_maps/               paths, tested helpers, and the shape-under-cloth data module
 results/                      committed outputs (features and JSON results)
@@ -113,3 +120,4 @@ See [CITATION.cff](CITATION.cff). Please also cite the original studies:
 - Yates, T. S., Yasuda, S., & Yildirim, I. (2024). Temporal segmentation and "look ahead" simulation: Physical events structure visual perception of intuitive physics. *Journal of Experimental Psychology: Human Perception and Performance*.
 - Bi, W., Shah, A. D., Wong, K. W., Scholl, B. J., & Yildirim, I. (2025). Computational models reveal that intuitive physics underlies visual processing of soft objects. *Nature Communications*.
 - Yildirim, I., Siegel, M. H., Soltani, A. A., Ray Chaudhuri, S., & Tenenbaum, J. B. (2024). Perception of 3D shape integrates intuitive physics and analysis-by-synthesis. *Nature Human Behaviour*, 8, 320–335.
+- Bear, D. M., et al. (2021). Physion: Evaluating physical prediction from vision in humans and machines. *NeurIPS Datasets and Benchmarks*.

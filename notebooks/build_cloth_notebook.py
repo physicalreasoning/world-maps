@@ -306,3 +306,141 @@ h3 = HANDOFF.parent / "03_video_imagination.ipynb"
 if HANDOFF.parent.exists():
     h3.write_text(json.dumps(nb3, indent=1))
     print("wrote", h3)
+
+# ------------------------------------------------------------------ notebook 04: Physion, generators as simulators
+PHYSION_FILES = {
+    "src/world_maps/physion.py": REPO / "src/world_maps/physion.py",
+    "scripts/physion_extract.py": REPO / "scripts/physion_extract.py",
+    "scripts/physion_generate.py": REPO / "scripts/physion_generate.py",
+    "scripts/physion_analyze.py": REPO / "scripts/physion_analyze.py",
+}
+cells4 = [
+    md("""# World Maps — generators as simulators: do imagined outcomes predict what people predict? (Colab)
+
+Physion (Bear et al. 2021): 1,144 test clips with per-stimulus human predictions (66–96 participants each) and ground
+truth. People saw the first **1.5 s** and answered "will the red object touch the yellow area?". Here a video generator
+**continues the 1.5 s context** and a validated red–yellow contact detector reads the imagined outcome. The question is
+not only accuracy: do the generator's imagined outcomes agree with people on *which* stimuli are hard (partial
+correlation after the label is removed), more than frozen-encoder readouts and a kinematic heuristic do?
+
+| Stage | What | Time (A100) |
+|---|---|---|
+| Data + detector | 270 MB from S3, labels and human data from GitHub; detector validated on the real outcomes (CPU) | ≈ 8 min |
+| Encoders | V-JEPA 2 L/H, VideoMAE-L, DINOv2-L, SigLIP 2 on the 1.5 s context (1,144 clips) | ≈ 15 min |
+| VLM | Qwen3-VL P(yes) | ≈ 20 min |
+| Generation | LTX-Video continuations for a stratified subset (default 40 per scenario = 320 clips, 1 sample) | ≈ 2–3 h |
+| Analysis | humans, detector gate, readouts, generator, paired comparisons, figures | ≈ 5 min |
+
+The last cell downloads `world_maps_physion_results.zip`. Nothing is pushed to GitHub.
+"""),
+    code("""#@title 1. Configuration
+MODELS = ["vjepaL", "vjepaH", "vmaeL", "dinoL", "siglip2"]  #@param {type:"raw"}
+RUN_VLM = True              #@param {type:"boolean"}
+RUN_GENERATION = True       #@param {type:"boolean"}
+GENERATOR = "ltx"           #@param ["ltx", "cosmos"]
+PER_SCENARIO = 40           #@param {type:"integer"}   # stimuli per scenario (balanced on the label); 8 scenarios
+K_SAMPLES = 1               #@param {type:"integer"}
+GEN_SIZE = 512              #@param {type:"integer"}   # multiple of 32
+N_FRAMES = 97               #@param {type:"integer"}   # 8k+1 for LTX
+SMOKE_TEST_FIRST = True     #@param {type:"boolean"}
+MOUNT_DRIVE = False         #@param {type:"boolean"}
+
+import os, torch
+gpu_gb = torch.cuda.get_device_properties(0).total_memory / 1e9 if torch.cuda.is_available() else 0
+print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NONE (switch to a GPU runtime)'}  {gpu_gb:.0f} GB")
+VLM_ID = "Qwen/Qwen3-VL-8B-Instruct" if gpu_gb >= 20 else "Qwen/Qwen3-VL-4B-Instruct"
+try:
+    from google.colab import userdata
+    tok = userdata.get("HF_TOKEN")
+    if tok: os.environ["HF_TOKEN"] = tok; print("HF_TOKEN loaded from Colab secrets")
+except Exception:
+    pass
+"""),
+    code("""#@title 2. Code and dependencies (about 2 min)
+%cd /content
+import os
+if not os.path.exists("world-maps"):
+    !git clone -q https://github.com/physicalreasoning/world-maps.git
+%cd /content/world-maps
+!git pull -q; git rev-parse --short HEAD
+!pip install -q "transformers>=5.0" accelerate "diffusers>=0.33" imageio imageio-ffmpeg matplotlib pillow opencv-python-headless scikit-learn scipy pandas safetensors
+import torch, transformers, diffusers
+print("torch", torch.__version__, "| transformers", transformers.__version__, "| diffusers", diffusers.__version__)
+os.environ["PYTHONPATH"] = "/content/world-maps/src"
+os.makedirs("results/physion", exist_ok=True)
+"""),
+]
+for rel, path in PHYSION_FILES.items():
+    cells4.append(code(f"%%writefile /content/world-maps/{rel}\n" + path.read_text()))
+cells4 += [
+    code("""#@title 3. Data (270 MB) and detector validation on the real outcomes (CPU, about 8 min)
+%cd /content/world-maps
+!PYTHONPATH=src python scripts/physion_extract.py --stages detector 2>&1 | tail -14
+"""),
+    code("""#@title 4. Smoke test: one generated continuation, shown
+%cd /content/world-maps
+if SMOKE_TEST_FIRST and RUN_GENERATION:
+    !PYTHONPATH=src python scripts/physion_generate.py --generator {GENERATOR} --per-scenario 2 --k 1 --size {GEN_SIZE} --n-frames {N_FRAMES} --limit 1 --out /content/smoke_gen 2>&1 | tail -5
+    import glob, pandas as pd
+    from IPython.display import display, Video
+    for f in sorted(glob.glob("/content/smoke_gen/*/*.mp4"))[:1]:
+        print(f); display(Video(f, embed=True, width=320))
+    for f in glob.glob("/content/smoke_gen/*/scores.csv"):
+        display(pd.read_csv(f).T)
+else:
+    print("skipped")
+"""),
+    code("""#@title 5. Encoders on the 1.5 s context (about 15 min) and VLM (optional, about 20 min)
+%cd /content/world-maps
+args = " ".join(MODELS)
+!PYTHONPATH=src python scripts/physion_extract.py --stages encoders --models {args} 2>&1 | grep -v -i "warn\\|Loading weights\\|Fetching" | tail -8
+if RUN_VLM:
+    !PYTHONPATH=src python scripts/physion_extract.py --stages vlm --vlm-id {VLM_ID} 2>&1 | grep -v -i "warn\\|Loading weights\\|Fetching" | tail -3
+"""),
+    code("""#@title 6. Generation for the stratified subset (long; resumable)
+%cd /content/world-maps
+if RUN_GENERATION:
+    !PYTHONPATH=src python scripts/physion_generate.py --generator {GENERATOR} --per-scenario {PER_SCENARIO} --k {K_SAMPLES} --size {GEN_SIZE} --n-frames {N_FRAMES} 2>&1 | tail -12
+    import glob, numpy as np
+    from PIL import Image
+    from IPython.display import display
+    frames = sorted(glob.glob(f"results/physion/generated/{GENERATOR}/frames/*_last.png"))[:12]
+    if frames:
+        sheet = np.concatenate([np.array(Image.open(f)) for f in frames], 1)
+        Image.fromarray(sheet).save(f"results/physion/generated/{GENERATOR}/last_frames_sheet.png"); display(Image.fromarray(sheet))
+else:
+    print("skipped")
+"""),
+    code("""#@title 7. Analysis (CPU, about 5 min)
+%cd /content/world-maps
+!PYTHONPATH=src python scripts/physion_analyze.py --n-boot 1000
+from IPython.display import Image as IM, display
+for f in ["error_agreement.png", "accuracy_by_scenario.png"]:
+    display(IM(filename=f"results/physion/figures/{f}"))
+"""),
+    code("""#@title 8. Package results for download
+%cd /content/world-maps
+!zip -q -r /content/world_maps_physion_results.zip results/physion/physion_results.json results/physion/physion_results.md results/physion/figures results/physion/detector_real.csv results/physion/kinematics.csv results/physion/stimuli.csv results/physion/vlm.csv results/physion/features/models.json $(ls results/physion/generated/*/scores.csv results/physion/generated/*/last_frames_sheet.png 2>/dev/null) $(ls results/physion/generated/*/*.mp4 2>/dev/null | head -8) 2>/dev/null
+!ls -la /content/world_maps_physion_results.zip
+if MOUNT_DRIVE:
+    from google.colab import drive
+    drive.mount("/content/drive")
+    !mkdir -p /content/drive/MyDrive/world_maps_physion && cp -r results/physion/features results/physion/generated /content/drive/MyDrive/world_maps_physion/ 2>/dev/null; ls /content/drive/MyDrive/world_maps_physion
+from google.colab import files
+files.download("/content/world_maps_physion_results.zip")
+"""),
+    md("""### If something fails
+- **LTX conditioning errors:** `GEN_SIZE` must be a multiple of 32 and `N_FRAMES` = 8k + 1 (97, 121). The context is resampled to 24 fps (36 frames → 33 used).
+- **Cosmos:** experimental; needs the `cosmos_guardrail` package and Hub access. Use `ltx` if it fails.
+- **Generation too slow:** lower `PER_SCENARIO` to 24 (192 clips) or `N_FRAMES` to 73; the analysis uses whatever exists.
+- **Runtime disconnects:** rerun cells 2 and 6; finished clips are skipped (scores.csv is appended).
+"""),
+]
+nb4 = {"cells": cells4, "metadata": META, "nbformat": 4, "nbformat_minor": 5}
+out4 = REPO / "notebooks" / "colab_physion_simulators.ipynb"
+out4.write_text(json.dumps(nb4, indent=1))
+print("wrote", out4)
+h4 = HANDOFF.parent / "04_physion_simulators.ipynb"
+if HANDOFF.parent.exists():
+    h4.write_text(json.dumps(nb4, indent=1))
+    print("wrote", h4)
