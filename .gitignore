@@ -6,7 +6,7 @@ __pycache__/
 .pytest_cache/
 results/*_test.csv
 
-# large local artefacts (features, generated images, DMFC caches)
+# large local artefacts (features, generated images, data caches)
 results/*/features/
 results/*/imagined/
 notebooks/.ipynb_checkpoints/
