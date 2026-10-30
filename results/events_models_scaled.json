@@ -1,0 +1,72 @@
+{
+ "vjepaH": {
+  "hub": "facebook/vjepa2-vith-fpc64-256",
+  "family": "vjepa2",
+  "input_size": 256,
+  "params": 653930880,
+  "device": "cuda",
+  "seconds": 1474,
+  "status": "ok",
+  "scenes": 32
+ },
+ "vjepag": {
+  "hub": "facebook/vjepa2-vitg-fpc64-256",
+  "family": "vjepa2",
+  "input_size": 256,
+  "params": 1034555264,
+  "device": "cuda",
+  "seconds": 1924,
+  "status": "ok",
+  "scenes": 32
+ },
+ "vmaeL": {
+  "hub": "MCG-NJU/videomae-large",
+  "family": "videomae",
+  "input_size": 224,
+  "params": 342996992,
+  "device": "cuda",
+  "seconds": 386,
+  "status": "ok",
+  "scenes": 32
+ },
+ "dinoL": {
+  "hub": "facebook/dinov2-large",
+  "family": "dinov2",
+  "input_size": 224,
+  "params": 304368640,
+  "device": "cuda",
+  "seconds": 304,
+  "status": "ok",
+  "scenes": 32
+ },
+ "dinog": {
+  "hub": "facebook/dinov2-giant",
+  "family": "dinov2",
+  "input_size": 224,
+  "params": 1136480768,
+  "device": "cuda",
+  "seconds": 399,
+  "status": "ok",
+  "scenes": 32
+ },
+ "siglip2": {
+  "hub": "google/siglip2-so400m-patch16-256",
+  "family": "siglip2",
+  "input_size": 256,
+  "params": 1135670962,
+  "device": "cuda",
+  "seconds": 307,
+  "status": "ok",
+  "scenes": 32
+ },
+ "vlm": {
+  "hub": "Qwen/Qwen3-VL-8B-Instruct",
+  "family": "qwen_vl",
+  "input_size": 256,
+  "params": 8767123696,
+  "device": "cuda",
+  "seconds": 555,
+  "status": "ok",
+  "scenes": 32
+ }
+}
