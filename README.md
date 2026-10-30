@@ -12,7 +12,7 @@
 
 ## Status
 
-**Exploratory pilot on public data.** Two analyses are complete. Both use human data publicly released by the Yale Cognitive and Neural Computation Lab (CNCL). Confirmatory studies are planned and not yet run. This is not an official lab release.
+**Exploratory studies on public data.** Five analyses are complete (physical events at two scales, Woven, shape under cloth, Physion). Both use human data publicly released by the Yale Cognitive and Neural Computation Lab (CNCL). Confirmatory studies are planned and not yet run. This is not an official lab release.
 
 ## The question
 
@@ -48,20 +48,29 @@ From the released trials of [Bi et al. (2025)](https://www.nature.com/articles/s
 
 A normal-approximation sensitivity estimate puts the resolvable difference in this four-scene design at about 8 points.
 
-### 3. Shape under cloth: have foundation models closed the gap? (preliminary)
+### 3. Shape under cloth: have foundation models learned to see through the drape? No.
 
-Data: [Yildirim, Siegel, Soltani, Ray Chaudhuri & Tenenbaum (2024)](https://www.nature.com/articles/s41562-023-01759-7). People match a cloth-draped object to its bare counterpart; the lab's physics-based analysis-by-synthesis model (PbAS) explains trial-level accuracy and response times, and ImageNet CNNs sit at chance on the hard trials. Stimuli, human data and PbAS runs are public.
+Data: [Yildirim et al. (2024)](https://www.nature.com/articles/s41562-023-01759-7). People match a cloth-draped object to its bare counterpart; the lab's physics-based analysis-by-synthesis model (PbAS) explains trial-level accuracy and response times; ImageNet CNNs sit at chance on the hard (same-category) trials. Stimuli, human data and PbAS runs are public, and our pipeline reproduces the paper's numbers (PbAS r = 0.44 [0.33, 0.54]; ceiling 0.71; RT r 0.74 / 0.81 vs 0.71 / 0.67).
 
-- **The human side and the PbAS reference reproduce from the released data with our code:** occluded same-category accuracy 0.73 (ceiling 0.71 split-half); PbAS trial-level r = 0.44 [0.32, 0.55] (paper: 0.44 [0.33, 0.54]); PbAS iterations-to-criterion vs log RT r = 0.74 / 0.81 (paper 0.71 / 0.67).
-- **Frozen foundation encoders with the paper's protocol do not close the gap.** DINOv2 S/B/L and SigLIP 2 score 0.35–0.53 on occluded same-category trials (humans 0.73) and correlate with human trial accuracy at r ≤ 0.16, all below PbAS (p < .001, participant bootstrap). Pose variation alone hurts: unoccluded same-category accuracy is 0.48–0.75 (humans 0.87).
-- **Decodable is not used.** A linear map from the draped target's embedding to bare-object embeddings, learned on held-out categories, lifts occluded same-category accuracy to 0.52–0.68, but its trial-level correlation with humans stays near zero. The hidden-shape information is partly recoverable from the features; the pattern of difficulty is not the human one.
-- **Decision margin and RT.** Larger model margins go with faster human responses for SigLIP 2 (ρ = −0.35) and DINOv2-S (−0.26) but not DINOv2-B; to be settled with the full model set.
+- **The gap is not closed.** With the paper's protocol, the best trial-level correlation with human accuracy on occluded same-category trials is 0.18 [0.11, 0.25] (V-JEPA 2-L); every model's upper bound is below PbAS's lower bound. AlexNet reproduces the paper's chance result (0.53, r = 0.08). CLIP-L and V-JEPA 2 reach 0.60–0.65 accuracy on the hard cell, above chance, with errors that are not human-like.
+- **Decodable but not used.** A linear map from the draped target's embedding to bare-object embeddings, learned on held-out categories, lifts hard-cell accuracy to 0.62–0.67 (DINOv2-B/g, V-JEPA 2-H) while its correlation with human difficulty stays near zero.
+- **Appearance editing is not simulation.** SDXL in the analysis-by-synthesis loop (drape each candidate, un-drape the target) stays at chance; the generator wraps texture around the object rather than draping a cloth over it. The video-generation route is built; its first run produced no clips.
+- **Margin and RT.** Larger decision margins go with faster human responses for V-JEPA 2-H (ρ = −0.41), SigLIP 2 (−0.35), AlexNet (−0.34), DINOv2-g (−0.32); not for the others. Suggestive.
 
-Still to run (Colab): AlexNet (the paper's reference), DINOv2-g, DINOv3, CLIP, V-JEPA 2, Qwen3-VL, and an *imagination* stage in which an image generator stands in for the cloth simulator inside analysis-by-synthesis. Table and method in [results/cloth/cloth_results.md](results/cloth/cloth_results.md).
+Table, figures and the imagined contact sheet: [results/cloth](results/cloth/cloth_results.md).
 
-### 4. Generators as simulators (built, GPU run pending)
+### 4. Generators as simulators on Physion: people and V-JEPA 2 get the same clips wrong
 
-Data: [Physion](https://github.com/cogtoolslab/physics-benchmarking-neurips2021) (Bear et al. 2021): 1,144 test clips with per-stimulus human predictions and ground truth; people saw the first 1.5 s and predicted whether the red object would touch the yellow area. A video generator continues the 1.5 s context and a contact detector reads the imagined outcome. The detector is validated on the real outcomes first (0.81 accuracy overall; a validity gate selects scenarios ≥ 0.75). The question is whether imagined outcomes agree with people on *which* stimuli are hard, beyond accuracy, more than frozen-encoder readouts and a kinematic heuristic do. Scripts `physion_*`; plan and decision rules in the project folder.
+Data: [Physion](https://github.com/cogtoolslab/physics-benchmarking-neurips2021) (Bear et al. 2021), 1,144 test clips with per-stimulus human predictions (66–96 participants each; reliability 0.99). People saw 1.5 s and predicted whether the red object would touch the yellow area. Key metric: the partial correlation between model and human P(yes) after the ground-truth label is regressed out of both, i.e. agreement on *which* clips are judged wrongly; accuracy-matched random agents score 0.00.
+
+- **A frozen V-JEPA 2-H with a linear readout predicts human error patterns:** partial r = 0.37 [0.32, 0.42], κ with the human majority 0.37, accuracy 0.64 (humans 0.74). Trained on the other seven scenarios it still transfers (0.14 [0.08, 0.20]). Static encoders carry less (SigLIP 2 0.23, DINOv2-L 0.18), the VLM 0.12, a kinematic heuristic 0.03.
+- **A video generator's imagined outcome is human-like, but less so.** LTX-Video 2B continues the 1.5 s context zero-shot; a contact detector validated on the real outcomes (0.81; five scenarios pass the ≥ 0.75 gate) reads the imagined result. On the validated scenarios the imagined contact agrees with human errors at 0.16 [0.04, 0.29], above the static and kinematic readouts (paired lower bounds > 0) and below V-JEPA 2 (−0.13 [−0.29, +0.05]). Accuracy 0.58; the bottleneck is continuation quality.
+
+Table, paired comparisons, clips: [results/physion](results/physion/physion_results.md).
+
+### 5. Physical events at scale: the Pilot 0 dissociation holds
+
+Running the Pilot 0 protocol on larger models: DINOv2-L and DINOv2-g frame change predict where people miss slowdowns (+20.9 and +19.3 × 10⁻³ nats per trial, Holm p = .005; SigLIP 2 +10.8, p = .016), while V-JEPA 2's prediction error adds nothing at L, H or g (≤ +1.7, n.s.) and VideoMAE-L adds nothing. Qwen3-VL's boundary judgment marks boundaries (AUROC 0.74) without predicting detection. [results/events_results_scaled.md](results/events_results_scaled.md).
 
 ## Repository layout
 
