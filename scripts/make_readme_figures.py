@@ -23,7 +23,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.right": False})
 BLUE, GREEN, RED, GREY, ORANGE = "#3b6fd1", "#2f9e44", "#c92a2a", "#868e96", "#e8590c"
 NAMES = {"vjepaL": "V-JEPA 2-L", "vjepaH": "V-JEPA 2-H", "dinoB": "DINOv2-B", "dinoL": "DINOv2-L", "dinog": "DINOv2-g",
-         "siglip2": "SigLIP 2", "clipL": "CLIP-L", "alexnet": "AlexNet (paper)", "vmaeL": "VideoMAE-L"}
+         "siglip2": "SigLIP 2", "clipL": "CLIP-L", "alexnet": "AlexNet", "vmaeL": "VideoMAE-L"}
 
 
 def cloth():
