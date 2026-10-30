@@ -1,0 +1,61 @@
+{
+ "vjepaL": {
+  "status": "ok",
+  "hub": "facebook/vjepa2-vitl-fpc64-256",
+  "params": 325971328,
+  "seconds": 277.7,
+  "n": 1144,
+  "dims": {
+   "mean": 1024,
+   "last_slot": 1024,
+   "last_grid": 16384
+  }
+ },
+ "vjepaH": {
+  "status": "ok",
+  "hub": "facebook/vjepa2-vith-fpc64-256",
+  "params": 653930880,
+  "seconds": 364.7,
+  "n": 1144,
+  "dims": {
+   "mean": 1280,
+   "last_slot": 1280,
+   "last_grid": 20480
+  }
+ },
+ "vmaeL": {
+  "status": "ok",
+  "hub": "MCG-NJU/videomae-large",
+  "params": 303860736,
+  "seconds": 288.7,
+  "n": 1144,
+  "dims": {
+   "mean": 1024,
+   "last_grid": 16384
+  }
+ },
+ "dinoL": {
+  "status": "ok",
+  "hub": "facebook/dinov2-large",
+  "params": 304368640,
+  "seconds": 285.5,
+  "n": 1144,
+  "dims": {
+   "mean": 1024,
+   "last": 1024,
+   "last_minus_first": 1024
+  }
+ },
+ "siglip2": {
+  "status": "ok",
+  "hub": "google/siglip2-so400m-patch16-256",
+  "params": 1135670962,
+  "seconds": 240.2,
+  "n": 1144,
+  "dims": {
+   "mean": 1152,
+   "last": 1152,
+   "last_minus_first": 1152
+  }
+ }
+}
