@@ -10,6 +10,10 @@
 [[Data and licenses]](docs/DATA.md)
 [[Reproduction]](docs/REPRODUCE.md)
 
+<p align="center">
+  <img src="docs/figures/physion_error_agreement.png" alt="Physion: a frozen V-JEPA 2 predicts which clips people get wrong" width="100%">
+</p>
+
 ## Status
 
 **Exploratory studies on public data.** Five analyses are complete (physical events at two scales, Woven, shape under cloth, Physion). Both use human data publicly released by the Yale Cognitive and Neural Computation Lab (CNCL). Confirmatory studies are planned and not yet run. This is not an official lab release.
@@ -57,6 +61,11 @@ Data: [Yildirim et al. (2024)](https://www.nature.com/articles/s41562-023-01759-
 - **Appearance editing is not simulation.** SDXL in the analysis-by-synthesis loop (drape each candidate, un-drape the target) stays at chance; the generator wraps texture around the object rather than draping a cloth over it. The video-generation route is built; its first run produced no clips.
 - **Margin and RT.** Larger decision margins go with faster human responses for V-JEPA 2-H (ρ = −0.41), SigLIP 2 (−0.35), AlexNet (−0.34), DINOv2-g (−0.32); not for the others. Suggestive.
 
+<p align="center"><img src="docs/figures/cloth_gap.png" alt="Shape under cloth: accuracy and trial-level correlation per model" width="100%"></p>
+
+<p align="center"><img src="docs/figures/cloth_imagined.png" alt="Imagined images: target, match, distractor, SDXL-draped match and distractor, SDXL un-draped target" width="80%"><br>
+<sub>Columns: draped target · match · distractor · SDXL "draped" match · SDXL "draped" distractor · SDXL "un-draped" target. The generator wraps texture around the object and leaves the target under its cloth.</sub></p>
+
 Table, figures and the imagined contact sheet: [results/cloth](results/cloth/cloth_results.md).
 
 ### 4. Generators as simulators on Physion: people and V-JEPA 2 get the same clips wrong
@@ -66,11 +75,16 @@ Data: [Physion](https://github.com/cogtoolslab/physics-benchmarking-neurips2021)
 - **A frozen V-JEPA 2-H with a linear readout predicts human error patterns:** partial r = 0.37 [0.32, 0.42], κ with the human majority 0.37, accuracy 0.64 (humans 0.74). Trained on the other seven scenarios it still transfers (0.14 [0.08, 0.20]). Static encoders carry less (SigLIP 2 0.23, DINOv2-L 0.18), the VLM 0.12, a kinematic heuristic 0.03.
 - **A video generator's imagined outcome is human-like, but less so.** LTX-Video 2B continues the 1.5 s context zero-shot; a contact detector validated on the real outcomes (0.81; five scenarios pass the ≥ 0.75 gate) reads the imagined result. On the validated scenarios the imagined contact agrees with human errors at 0.16 [0.04, 0.29], above the static and kinematic readouts (paired lower bounds > 0) and below V-JEPA 2 (−0.13 [−0.29, +0.05]). Accuracy 0.58; the bottleneck is continuation quality.
 
+<p align="center"><img src="docs/figures/physion_generated_last_frames.png" alt="Last frames of LTX-Video continuations" width="100%"><br>
+<sub>Last frames of LTX-Video continuations of the 1.5 s context (collide scenario); the contact detector reads these.</sub></p>
+
 Table, paired comparisons, clips: [results/physion](results/physion/physion_results.md).
 
 ### 5. Physical events at scale: the Pilot 0 dissociation holds
 
 Running the Pilot 0 protocol on larger models: DINOv2-L and DINOv2-g frame change predict where people miss slowdowns (+20.9 and +19.3 × 10⁻³ nats per trial, Holm p = .005; SigLIP 2 +10.8, p = .016), while V-JEPA 2's prediction error adds nothing at L, H or g (≤ +1.7, n.s.) and VideoMAE-L adds nothing. Qwen3-VL's boundary judgment marks boundaries (AUROC 0.74) without predicting detection. [results/events_results_scaled.md](results/events_results_scaled.md).
+
+<p align="center"><img src="docs/figures/events_scale.png" alt="Held-out gain in predicting human slowdown misses by model and size" width="90%"></p>
 
 ## Repository layout
 
@@ -90,6 +104,7 @@ scripts/
   physion_extract.py          Physion: contact-detector validation, kinematic features, encoder features, VLM
   physion_generate.py         Physion: video-generator continuations scored with the detector (GPU)
   physion_analyze.py          Physion: humans, detector gate, readouts, generator, paired comparisons
+  make_readme_figures.py      README figures from the committed results (docs/figures/)
 notebooks/                    Colab notebooks (generated; see build_cloth_notebook.py)
 src/world_maps/               paths, tested helpers, and the shape-under-cloth data module
 results/                      committed outputs (features and JSON results)
