@@ -1,0 +1,157 @@
+{
+ "dinoB": {
+  "status": "ok",
+  "hub": "facebook/dinov2-base",
+  "params": 86580480,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L6_cls": 768,
+   "L9_cls": 768,
+   "L12_cls": 768,
+   "L6_grid": 12288,
+   "L9_grid": 12288,
+   "L12_grid": 12288,
+   "final_pooled": 768
+  },
+  "seconds": 14.7
+ },
+ "alexnet": {
+  "status": "ok",
+  "hub": null,
+  "params": 61100840,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "fc6": 4096,
+   "fc7": 4096,
+   "pool5": 9216
+  },
+  "seconds": 6.0
+ },
+ "dinoL": {
+  "status": "ok",
+  "hub": "facebook/dinov2-large",
+  "params": 304368640,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L8_cls": 1024,
+   "L12_cls": 1024,
+   "L16_cls": 1024,
+   "L20_cls": 1024,
+   "L24_cls": 1024,
+   "L8_grid": 16384,
+   "L12_grid": 16384,
+   "L16_grid": 16384,
+   "L20_grid": 16384,
+   "L24_grid": 16384,
+   "final_pooled": 1024
+  },
+  "seconds": 25.4
+ },
+ "dinog": {
+  "status": "ok",
+  "hub": "facebook/dinov2-giant",
+  "params": 1136480768,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L10_cls": 1536,
+   "L20_cls": 1536,
+   "L30_cls": 1536,
+   "L40_cls": 1536,
+   "L10_grid": 24576,
+   "L20_grid": 24576,
+   "L30_grid": 24576,
+   "L40_grid": 24576,
+   "final_pooled": 1536
+  },
+  "seconds": 80.3
+ },
+ "dinov3L": {
+  "status": "failed: OSError: You are trying to access a gated repo.\nMake sure to have access to it at https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m.\n401 Client Error. (Request ID: Root=1-6ae39a08-3b5c79ca664e72d92fde77e2;fb53ad9b-03cf-42c9-a3f8-ba8cf0cf6fca)\n\nCannot access gated repo for url https://huggingfac",
+  "hub": "facebook/dinov3-vitl16-pretrain-lvd1689m"
+ },
+ "siglip2": {
+  "status": "ok",
+  "hub": "google/siglip2-so400m-patch16-256",
+  "params": 1135670962,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L9_cls": 1152,
+   "L18_cls": 1152,
+   "L27_cls": 1152,
+   "L9_grid": 18432,
+   "L18_grid": 18432,
+   "L27_grid": 18432,
+   "final_pooled": 1152
+  },
+  "seconds": 33.5
+ },
+ "clipL": {
+  "status": "ok",
+  "hub": "openai/clip-vit-large-patch14",
+  "params": 427616513,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L8_cls": 1024,
+   "L12_cls": 1024,
+   "L16_cls": 1024,
+   "L20_cls": 1024,
+   "L24_cls": 1024,
+   "L8_grid": 16384,
+   "L12_grid": 16384,
+   "L16_grid": 16384,
+   "L20_grid": 16384,
+   "L24_grid": 16384,
+   "final_pooled": 1024
+  },
+  "seconds": 26.1
+ },
+ "vjepaL": {
+  "status": "ok",
+  "hub": "facebook/vjepa2-vitl-fpc64-256",
+  "params": 325971328,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L8_mean": 1024,
+   "L16_mean": 1024,
+   "L24_mean": 1024,
+   "L8_grid": 16384,
+   "L16_grid": 16384,
+   "L24_grid": 16384
+  },
+  "seconds": 58.9
+ },
+ "vjepaH": {
+  "status": "ok",
+  "hub": "facebook/vjepa2-vith-fpc64-256",
+  "params": 653930880,
+  "device": "cuda",
+  "n_images": 2160,
+  "dims": {
+   "L16_mean": 1280,
+   "L24_mean": 1280,
+   "L32_mean": 1280,
+   "L16_grid": 20480,
+   "L24_grid": 20480,
+   "L32_grid": 20480
+  },
+  "seconds": 70.9
+ },
+ "vlm": {
+  "status": "ok",
+  "hub": "Qwen/Qwen3-VL-8B-Instruct",
+  "params": 8767123696,
+  "device": "cuda",
+  "n_images": 720,
+  "dims": {
+   "p_match": 1
+  },
+  "seconds": 119.4
+ }
+}
