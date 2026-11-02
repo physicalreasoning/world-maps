@@ -175,6 +175,10 @@ def plane():
     b.annotate("LTX imagined outcome (all scenarios)", (g["all"]["accuracy"], g["all"]["partial_r_given_label"]), fontsize=7, xytext=(4, -9), textcoords="offset points")
     b.scatter(g["primary"]["accuracy"], g["primary"]["partial_r_given_label"], marker="^", c=GREEN, s=60, zorder=3)
     b.annotate("LTX imagined outcome\n(validated scenarios)", (g["primary"]["accuracy"], g["primary"]["partial_r_given_label"]), fontsize=7, xytext=(8, -30), textcoords="offset points", ha="left")
+    # probe line: partial r = beta * (accuracy - 0.5), least squares through chance over all readouts
+    xs = np.array([v["all"]["accuracy"] for v in p["readouts"].values()]); ys = np.array([v["all"]["partial_r_given_label"] for v in p["readouts"].values()])
+    beta = float(np.sum((xs - 0.5) * ys) / np.sum((xs - 0.5) ** 2)); xx = np.linspace(0.5, 0.78, 10)
+    b.plot(xx, beta * (xx - 0.5), color=BLUE, lw=1, ls=":", zorder=1); b.text(0.69, beta * 0.19 + 0.015, f"probe line: {beta:.2f} (acc − ½)", fontsize=7.5, color=BLUE, rotation=38)
     sp, _, _ = single_participant_ceiling()
     b.axhline(sp, color=RED, lw=1, ls="--"); b.text(0.455, sp + 0.01, f"one idealised participant {sp:.2f} (reference, not a ceiling for graded outputs)", fontsize=7.5, color=RED)
     b.axhline(0, color=GREY, lw=1, ls="--"); b.text(0.455, 0.012, "accuracy-matched random agent: partial r = 0", fontsize=7.5, color=GREY)
